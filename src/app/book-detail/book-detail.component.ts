@@ -23,7 +23,11 @@ export class BookDetailComponent implements OnInit {
   ngOnInit() {
   }
 
+  /**
+   * Call the HTTP delete method and navigate back to the list of books.
+   */
   delete() {
+    //invoke REST API
     this.router.navigate(['/book-list']);
   }
 
