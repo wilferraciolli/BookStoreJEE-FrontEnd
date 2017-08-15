@@ -1,5 +1,7 @@
-import { Component, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
+import {Component, OnInit} from '@angular/core';
+import {ActivatedRoute, Router} from '@angular/router';
+import {Book} from '../service/model/book';
+import {BookService} from '../service/api/book.service';
 
 @Component({
   selector: 'app-book-detail',
@@ -8,27 +10,49 @@ import { Router } from '@angular/router';
 })
 export class BookDetailComponent implements OnInit {
 
-  private book = {
-    title: "dummy title",
-    description: "dummy description",
-    unitCost: "123",
-    isbn: "1234-3456-34564",
-    nbOfPages:"234",
-    language: "English"
-  };
+  book: Book = new Book();
 
-  constructor(private router: Router) {
+  /**
+   * Explicit constructor
+   * @param {Router} router The router to navigate tpo
+   * @param {BookService} bookService The Book service
+   * @param {ActivatedRoute} route containing details of the current router before going to the next one.
+   */
+  constructor(private router: Router, private bookService: BookService, private route: ActivatedRoute) {
+   // this.book.isbn = 'fdfdfd';
   }
 
+  /**
+   * OnInit method
+   */
   ngOnInit() {
+    // Get the id parameters passed from the previous router and call the get book by id end point
+    this.route.params
+      .map(params => params['bookId'])
+      .switchMap(id => this.bookService.getBook(id))
+      .subscribe(book => this.book = book);
   }
 
   /**
    * Call the HTTP delete method and navigate back to the list of books.
    */
   delete() {
-    //invoke REST API
-    this.router.navigate(['/book-list']);
+    // call delete book end point
+    this.bookService.deleteBook(this.book.id)
+      .finally(() => this.router.navigate(['/book-list']))
+      .subscribe();
+  }
+
+  /**
+   * Update a book.
+   */
+  update() {
+
+
+    // call delete book end point
+    this.bookService.updateBook(this.book.id, this.book)
+      .finally(() => this.router.navigate(['/book-list']))
+      .subscribe();
   }
 
 }

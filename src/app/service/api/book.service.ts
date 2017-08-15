@@ -96,13 +96,37 @@ export class BookService {
    *
    * @summary Creates a book given a JSon Book representation
    */
-  public createBook(extraHttpRequestParams?: any): Observable<{}> {
-    return this.createBookWithHttpInfo(extraHttpRequestParams)
+  public createBook(body: Book, extraHttpRequestParams?: any): Observable<{}> {
+    return this.createBookWithHttpInfo(body, extraHttpRequestParams)
       .map((response: Response) => {
-        if (response.status === 204) {
-          return undefined;
-        } else {
-          return response.json() || {};
+        switch (response.status) {
+          case 204 :
+            return undefined;
+          case 201 :
+            return response;
+          default :
+            return response.json();
+        }
+      });
+  }
+
+  /**
+   *
+   * @summary Update the book for given id
+   * @param id
+   */
+  public updateBook(id: number, body: Book, extraHttpRequestParams?: any): Observable<Book> {
+    return this.updateBookWithHttpInfo(id, body, extraHttpRequestParams)
+      .map((response: Response) => {
+        switch (response.status) {
+          case 204 :
+            return undefined;
+          case 201 :
+            return response;
+          case 200 :
+            return response;
+          default :
+            return response.json();
         }
       });
   }
@@ -155,22 +179,6 @@ export class BookService {
   }
 
   /**
-   *
-   * @summary Update the book for given id
-   * @param id
-   */
-  public updateBook(id: number, extraHttpRequestParams?: any): Observable<Book> {
-    return this.updateBookWithHttpInfo(id, extraHttpRequestParams)
-      .map((response: Response) => {
-        if (response.status === 204) {
-          return undefined;
-        } else {
-          return response.json() || {};
-        }
-      });
-  }
-
-  /**
    * Returns the number of books
    *
    */
@@ -201,57 +209,30 @@ export class BookService {
     return this.http.request(path, requestOptions);
   }
 
-  // /**
-  //  * Returns the number of books
-  //  *
-  //  */
-  // public countBooksWithHttpInfo(extraHttpRequestParams?: any): Observable<Response> {
-  //   const path = this.basePath + '/books/count';
-  //
-  //   let queryParameters = new URLSearchParams();
-  //   let headers = new Headers(this.defaultHeaders.toJSON()); // https://github.com/angular/angular/issues/6845
-  //   // to determine the Content-Type header
-  //   let consumes: string[] = [];
-  //
-  //   // to determine the Accept header
-  //   let produces: string[] = [
-  //     'text/plain'
-  //   ];
-  //
-  //   let requestOptions: RequestOptionsArgs = new RequestOptions({
-  //     method: RequestMethod.Get,
-  //     headers: headers,
-  //     search: queryParameters,
-  //     withCredentials: this.configuration.withCredentials
-  //   });
-  //   // https://github.com/swagger-api/swagger-codegen/issues/4037
-  //   if (extraHttpRequestParams) {
-  //     requestOptions = (<any>Object).assign(requestOptions, extraHttpRequestParams);
-  //   }
-  //
-  //   return this.http.request(path, requestOptions);
-  // }
-
   /**
    * Creates a book given a JSon Book representation
    *
    */
-  public createBookWithHttpInfo(extraHttpRequestParams?: any): Observable<Response> {
+  public createBookWithHttpInfo(body: Book, extraHttpRequestParams?: any): Observable<Response> {
     const path = this.basePath + '/books';
 
     let queryParameters = new URLSearchParams();
     let headers = new Headers(this.defaultHeaders.toJSON()); // https://github.com/angular/angular/issues/6845
-    // to determine the Content-Type header
-    let consumes: string[] = [
-      'application/json'
-    ];
+
+    // verify required parameter 'body' is not null or undefined
+    if (body === null || body === undefined) {
+      throw new Error('Required parameter body was null or undefined when calling createBook.');
+    }
 
     // to determine the Accept header
     let produces: string[] = [];
 
+    headers.set('Content-Type', 'application/json');
+
     let requestOptions: RequestOptionsArgs = new RequestOptions({
       method: RequestMethod.Post,
       headers: headers,
+      body: body == null ? '' : JSON.stringify(body), // https://github.com/angular/angular/issues/10612
       search: queryParameters,
       withCredentials: this.configuration.withCredentials
     });
@@ -260,6 +241,46 @@ export class BookService {
       requestOptions = (<any>Object).assign(requestOptions, extraHttpRequestParams);
     }
 
+    return this.http.request(path, requestOptions);
+  }
+
+  /**
+   * Update the book for given id
+   * @param id
+   */
+  public updateBookWithHttpInfo(id: number, body: Book, extraHttpRequestParams?: any): Observable<Response> {
+    const path = this.basePath + '/books/${id}'
+      .replace('${' + 'id' + '}', String(id));
+
+    let queryParameters = new URLSearchParams();
+    let headers = new Headers(this.defaultHeaders.toJSON()); // https://github.com/angular/angular/issues/6845
+    // verify required parameter 'id' is not null or undefined
+    if (id === null || id === undefined) {
+      throw new Error('Required parameter id was null or undefined when calling updateBook.');
+    }
+    // to determine the Content-Type header
+    let consumes: string[] = [
+      'application/json'
+    ];
+
+    // to determine the Accept header
+    let produces: string[] = [
+      'application/json'
+    ];
+
+    headers.set('Content-Type', 'application/json');
+
+    let requestOptions: RequestOptionsArgs = new RequestOptions({
+      method: RequestMethod.Put,
+      headers: headers,
+      body: body == null ? '' : JSON.stringify(body), // https://github.com/angular/angular/issues/10612
+      search: queryParameters,
+      withCredentials: this.configuration.withCredentials
+    });
+    // https://github.com/swagger-api/swagger-codegen/issues/4037
+    if (extraHttpRequestParams) {
+      requestOptions = (<any>Object).assign(requestOptions, extraHttpRequestParams);
+    }
     return this.http.request(path, requestOptions);
   }
 
@@ -354,45 +375,6 @@ export class BookService {
 
     let requestOptions: RequestOptionsArgs = new RequestOptions({
       method: RequestMethod.Get,
-      headers: headers,
-      search: queryParameters,
-      withCredentials: this.configuration.withCredentials
-    });
-    // https://github.com/swagger-api/swagger-codegen/issues/4037
-    if (extraHttpRequestParams) {
-      requestOptions = (<any>Object).assign(requestOptions, extraHttpRequestParams);
-    }
-
-    return this.http.request(path, requestOptions);
-  }
-
-  /**
-   * Update the book for given id
-   *
-   * @param id
-   */
-  public updateBookWithHttpInfo(id: number, extraHttpRequestParams?: any): Observable<Response> {
-    const path = this.basePath + '/books/${id}'
-      .replace('${' + 'id' + '}', String(id));
-
-    let queryParameters = new URLSearchParams();
-    let headers = new Headers(this.defaultHeaders.toJSON()); // https://github.com/angular/angular/issues/6845
-    // verify required parameter 'id' is not null or undefined
-    if (id === null || id === undefined) {
-      throw new Error('Required parameter id was null or undefined when calling updateBook.');
-    }
-    // to determine the Content-Type header
-    let consumes: string[] = [
-      'application/json'
-    ];
-
-    // to determine the Accept header
-    let produces: string[] = [
-      'application/json'
-    ];
-
-    let requestOptions: RequestOptionsArgs = new RequestOptions({
-      method: RequestMethod.Put,
       headers: headers,
       search: queryParameters,
       withCredentials: this.configuration.withCredentials
